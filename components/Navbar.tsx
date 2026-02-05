@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import LoginModal from "./LoginModal";
+import SignupModal from "./SignupModal";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -142,6 +144,19 @@ export default function Navbar() {
             )}
           </div>
         </div>
+        {/* --- MODALS --- */}
+        {authMode === "login" && (
+          <LoginModal
+            onClose={closeAuth}
+            onSwitch={() => setAuthMode("signup")}
+          />
+        )}
+        {authMode === "signup" && (
+          <SignupModal
+            onClose={closeAuth}
+            onSwitch={() => setAuthMode("login")}
+          />
+        )}
       </nav>
     </header>
   );
