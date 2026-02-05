@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Merriweather, Italianno } from "next/font/google";
 import "./globals.css";
+import Navbar from "@/components/Navbar";
 
 const merriweather = Merriweather({
   subsets: ["latin"],
@@ -32,6 +33,7 @@ export default function RootLayout({
       <body
         className={`${merriweather.variable} ${italianno.variable} antialiased`}
       >
+        <Navbar />
         {children}
       </body>
     </html>
