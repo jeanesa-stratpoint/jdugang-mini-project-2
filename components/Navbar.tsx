@@ -153,8 +153,8 @@ export default function Navbar() {
         )}
         {authMode === "signup" && (
           <SignupModal
-            onClose={closeAuth}
-            onSwitch={() => setAuthMode("login")}
+            onCloseAction={() => setAuthMode(null)}
+            onSwitchAction={() => setAuthMode("login")}
           />
         )}
       </nav>
