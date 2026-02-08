@@ -1,8 +1,16 @@
 import { DUMMY_BLOGS, DUMMY_GRATITUDE } from "@/data/mock";
 import { BlogCard } from "@/components/BlogCard";
 import { GratitudeCard } from "@/components/GratitudeCard";
+import { getSession } from "@/lib/session";
+import { redirect } from "next/navigation";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const session = await getSession();
+
+  if (session?.userId) {
+    redirect("/home");
+  }
+
   return (
     <main className="w-full bg-[#F5F3EF] min-h-screen">
       {/* Container */}
