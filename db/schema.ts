@@ -50,6 +50,18 @@ export const likes = pgTable('likes', {
   })
 );
 
+export const passwordResetTokens = pgTable('password_reset_tokens', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .references(() => users.id, { onDelete: 'cascade' }) 
+    .notNull(),
+  
+
+  token: text('token').notNull().unique(),
+  expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // RELATIONS 
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -57,6 +69,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   comments: many(comments),
   likes: many(likes),
   gratitudeEntries: many(gratitudeEntries),
+  passwordResetTokens: many(passwordResetTokens),
 }));
 
 export const blogsRelations = relations(blogs, ({ one, many }) => ({
@@ -75,6 +88,13 @@ export const commentsRelations = relations(comments, ({ one }) => ({
   }),
   user: one(users, {
     fields: [comments.userId],
+    references: [users.id],
+  }),
+}));
+
+export const passwordResetTokensRelations = relations(passwordResetTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [passwordResetTokens.userId],
     references: [users.id],
   }),
 }));
