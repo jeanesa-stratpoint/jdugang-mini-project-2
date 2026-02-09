@@ -1,6 +1,3 @@
-import { DUMMY_BLOGS, DUMMY_GRATITUDE } from "@/data/mock";
-import { BlogCard } from "@/components/BlogCard";
-import { GratitudeCard } from "@/components/GratitudeCard";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 
@@ -27,27 +24,6 @@ export default async function LandingPage() {
             Because every moment worth thanking is worth sharing.
           </p>
         </section>
-
-        {/* COMMUNITY SECTION */}
-        <div className="mt-10 border-t border-[#85BFBB]/20 pt-10">
-          <h2 className="text-[#1F4F46]/60 font-serif italic text-2xl mb-10">
-            Community
-          </h2>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-            <div className="lg:col-span-2 space-y-8">
-              {DUMMY_BLOGS.map((blog) => (
-                <BlogCard key={blog.id} blog={blog} />
-              ))}
-            </div>
-
-            <div className="lg:col-span-1 space-y-6">
-              {DUMMY_GRATITUDE.map((note) => (
-                <GratitudeCard key={note.id} note={note} />
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
     </main>
   );
