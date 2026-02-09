@@ -98,3 +98,14 @@ export const passwordResetTokensRelations = relations(passwordResetTokens, ({ on
     references: [users.id],
   }),
 }));
+
+export const likesRelations = relations(likes, ({ one }) => ({
+  blog: one(blogs, {
+    fields: [likes.blogId],
+    references: [blogs.id],
+  }),
+  user: one(users, {
+    fields: [likes.userId],
+    references: [users.id],
+  }),
+}));
