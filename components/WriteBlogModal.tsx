@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { PenTool, X, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
 import { createBlog } from "@/actions/home.actions";
-import { UploadButton } from "@/utils/uploadthing";
+import { UploadButton } from "@/lib/utils/uploadthing";
 import Image from "next/image";
 import BlogNameCard from "./BlogNameCard";
 

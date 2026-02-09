@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { UploadButton } from "@/utils/uploadthing";
+import { UploadButton } from "@/lib/utils/uploadthing";
 import { updateProfileImage } from "@/actions/home.actions";
 import {
   Camera,
