@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import { signup, checkUsernameAvailability } from "@/actions/auth.actions";
 import { X, Check, Loader2, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import PasswordRequirement from "./PasswordRequirement";
 
 export default function SignupModal({
   onCloseAction,
@@ -15,7 +16,6 @@ export default function SignupModal({
   const [state, action, isPending] = useActionState(signup, undefined);
   const router = useRouter();
 
-  // --- REAL-TIME STATES ---
   const [username, setUsername] = useState("");
   const [usernameStatus, setUsernameStatus] = useState<
     "idle" | "checking" | "available" | "taken"
@@ -23,7 +23,6 @@ export default function SignupModal({
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // --- DERIVED STATE (Fix: Calculated immediately, no useEffect needed) ---
   const pwdCriteria = {
     length: password.length >= 8,
     letter: /[a-zA-Z]/.test(password),
@@ -34,9 +33,6 @@ export default function SignupModal({
     pwdCriteria.length && pwdCriteria.letter && pwdCriteria.number;
   const isMatch = confirmPassword.length > 0 && password === confirmPassword;
 
-  // --- EFFECTS ---
-
-  // 1. Username Debounce Check (This still needs useEffect because of the timer)
   useEffect(() => {
     const checkUsername = async () => {
       if (username.length < 3) {
@@ -53,7 +49,6 @@ export default function SignupModal({
     return () => clearTimeout(timer);
   }, [username]);
 
-  // 2. Close on Success
   useEffect(() => {
     if (state?.message === "Success! Account created.") {
       const timer = setTimeout(() => {
@@ -115,7 +110,7 @@ export default function SignupModal({
             )}
           </div>
 
-          {/* USERNAME (Real-time) */}
+          {/* USERNAME */}
           <div className="space-y-1 relative">
             <input
               required
@@ -163,7 +158,7 @@ export default function SignupModal({
             )}
           </div>
 
-          {/* PASSWORD (Real-time Checklist) */}
+          {/* PASSWORD */}
           <div className="space-y-2">
             <input
               required
@@ -181,14 +176,17 @@ export default function SignupModal({
               <PasswordRequirement
                 label="At least 8 characters"
                 met={pwdCriteria.length}
+                variant="dark"
               />
               <PasswordRequirement
                 label="Contains a letter"
                 met={pwdCriteria.letter}
+                variant="dark"
               />
               <PasswordRequirement
                 label="Contains a number"
                 met={pwdCriteria.number}
+                variant="dark"
               />
             </div>
           </div>
@@ -248,22 +246,6 @@ export default function SignupModal({
           </p>
         </form>
       </div>
-    </div>
-  );
-}
-
-// Helper Component for the checklist
-function PasswordRequirement({ label, met }: { label: string; met: boolean }) {
-  return (
-    <div
-      className={`flex items-center gap-2 text-xs transition-colors ${met ? "text-[#85BFBB]" : "text-white/40"}`}
-    >
-      {met ? (
-        <Check size={12} />
-      ) : (
-        <div className="w-3 h-3 rounded-full border border-current" />
-      )}
-      {label}
     </div>
   );
 }

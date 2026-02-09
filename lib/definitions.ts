@@ -16,9 +16,9 @@ export const SignupFormSchema = z.object({
     .regex(/[0-9]/, { message: 'Contain at least one number.' })
     .trim(),
   confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
 });
 
 export const LoginFormSchema = z.object({
@@ -39,3 +39,13 @@ export type FormState =
     }
   | undefined
 
+export const ResetPasswordSchema = z.object({
+  token: z.string(),
+  password: z.string().min(8, "Password must be at least 8 chars")
+    .regex(/[a-zA-Z]/, "Must contain a letter")
+    .regex(/[0-9]/, "Must contain a number"),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});

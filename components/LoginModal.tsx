@@ -8,9 +8,14 @@ import { useRouter } from "next/navigation";
 interface LoginModalProps {
   onClose: () => void;
   onSwitch: () => void;
+  onForgot: () => void;
 }
 
-export default function LoginModal({ onClose, onSwitch }: LoginModalProps) {
+export default function LoginModal({
+  onClose,
+  onSwitch,
+  onForgot,
+}: LoginModalProps) {
   const [state, action, isPending] = useActionState(login, undefined);
   const router = useRouter();
 
@@ -122,7 +127,11 @@ export default function LoginModal({ onClose, onSwitch }: LoginModalProps) {
           </button>
 
           <div className="flex justify-between text-sm text-[#1F4F46]/60 italic px-2">
-            <button type="button" className="hover:text-[#1F4F46]">
+            <button
+              type="button"
+              onClick={onForgot}
+              className="hover:text-[#1F4F46]"
+            >
               Forgot?
             </button>
             <button

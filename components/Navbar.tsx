@@ -3,9 +3,11 @@
 import Link from "next/link";
 import LoginModal from "./LoginModal";
 import SignupModal from "./SignupModal";
+import ForgotPasswordModal from "./ForgotPasswordModal";
+import BlogNameCard from "./BlogNameCard";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, X, LogOut, User as UserIcon } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 import { logout } from "@/actions/auth.actions";
 import {
   DropdownMenu,
@@ -29,9 +31,14 @@ interface NavbarProps {
 export default function Navbar({ user }: NavbarProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false); // Mobile Menu only
-  const [authMode, setAuthMode] = useState<"login" | "signup" | null>(null);
-
+  const [authMode, setAuthMode] = useState<
+    "login" | "signup" | "forgot" | null
+  >(null);
   const isLoggedIn = !!user;
+
+  if (pathname === "/reset-password") {
+    return null;
+  }
 
   const navLinks = [
     { label: "Home", href: "/home" },
@@ -49,12 +56,8 @@ export default function Navbar({ user }: NavbarProps) {
   return (
     <header className="w-full bg-[#E9EEE8] border-b border-black/5 sticky top-0 z-50">
       <nav className="max-w-350 mx-auto flex items-center justify-between px-6 md:px-10 py-4">
-        {/* BRAND LOGO */}
-        <Link
-          href={isLoggedIn ? "/home" : "/"}
-          className="text-3xl md:text-4xl font-italianno text-[#1F4F46] z-60"
-        >
-          I Am Grateful For...
+        <Link href={isLoggedIn ? "/home" : "/"}>
+          <BlogNameCard />
         </Link>
 
         {/* MOBILE HAMBURGER */}
@@ -89,7 +92,6 @@ export default function Navbar({ user }: NavbarProps) {
                 })}
               </div>
 
-              {/* SHADCN DROPDOWN & AVATAR */}
               <DropdownMenu>
                 <DropdownMenuTrigger className="focus:outline-none">
                   <Avatar>
@@ -126,7 +128,6 @@ export default function Navbar({ user }: NavbarProps) {
               </DropdownMenu>
             </>
           ) : (
-            // NOT LOGGED IN
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setAuthMode("login")}
@@ -175,7 +176,6 @@ export default function Navbar({ user }: NavbarProps) {
                 <div className="w-full h-px bg-[#1F4F46]/10 my-2" />
 
                 <div className="flex flex-col items-center gap-1 text-center">
-                  {/* Manual Avatar for Mobile since Shadcn Avatar is small by default */}
                   <div
                     className="w-16 h-16 rounded-full bg-[#85BFBB] 
                                   flex items-center justify-center text-white 
@@ -223,17 +223,25 @@ export default function Navbar({ user }: NavbarProps) {
           </div>
         </div>
 
-        {/* MODALS */}
         {authMode === "login" && (
           <LoginModal
             onClose={closeAuth}
             onSwitch={() => setAuthMode("signup")}
+            onForgot={() => setAuthMode("forgot")}
           />
         )}
+
         {authMode === "signup" && (
           <SignupModal
             onCloseAction={closeAuth}
             onSwitchAction={() => setAuthMode("login")}
+          />
+        )}
+
+        {authMode === "forgot" && (
+          <ForgotPasswordModal
+            onClose={closeAuth}
+            onBackToLogin={() => setAuthMode("login")}
           />
         )}
       </nav>

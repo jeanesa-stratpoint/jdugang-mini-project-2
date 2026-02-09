@@ -2,7 +2,6 @@ import 'server-only'
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
 
-// This key signs your tokens. Add SESSION_SECRET to your .env
 const secretKey = process.env.SESSION_SECRET
 const encodedKey = new TextEncoder().encode(secretKey)
 
@@ -33,7 +32,7 @@ export async function createSession(userId: string) {
   const cookieStore = await cookies()
 
   cookieStore.set('session', session, {
-    httpOnly: true, // Security: prevents client-side JS from reading the cookie
+    httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     expires: expiresAt,
     sameSite: 'lax',
@@ -46,9 +45,6 @@ export async function deleteSession() {
   cookieStore.delete('session')
 }
 
-/**
- * Helper to get the current session in Server Components
- */
 export async function getSession() {
   const session = (await cookies()).get('session')?.value
   if (!session) return null
