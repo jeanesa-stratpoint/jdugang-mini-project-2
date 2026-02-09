@@ -17,7 +17,9 @@ export default function WriteBlogButton({
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="bg-[#1F4F46] text-white px-6 py-3 rounded-full font-bold shadow-lg hover:bg-[#163a34] transition flex items-center gap-2"
+        className="bg-[#1F4F46] text-white px-6 py-3 rounded-full 
+                font-bold shadow-lg hover:bg-[#163a34] transition flex items-center 
+                gap-2 animate-in fade-in slide-in-from-bottom-4 duration-500"
       >
         <PenTool size={18} />
         {label}

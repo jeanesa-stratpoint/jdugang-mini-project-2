@@ -1,35 +1,35 @@
 "use server";
 
-import { db } from "@/lib/db"; // Adjust path to your db instance
+import { db } from "@/lib/db"; 
 import { blogs, users } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { UTApi } from "uploadthing/server";
 
-// --- 1. GET PROFILE STATS ---
+// GET PROFILE STATS
 export async function getUserStats(userId: string) {
-  // Get user details
   const user = await db.query.users.findFirst({
     where: eq(users.id, userId),
   });
 
   if (!user) return null;
 
-  // Get all blogs by this user
   const userBlogs = await db.query.blogs.findMany({
     where: eq(blogs.authorId, userId),
+    orderBy: [desc(blogs.createdAt)], 
     with: {
-      likes: true, // Fetch likes relations to count them
-      comments: true, // Fetch comments relations to count them
+      likes: true,
+      comments: true,
     },
   });
 
-  // Calculate aggregates
   const postCount = userBlogs.length;
   const totalLikes = userBlogs.reduce((acc, blog) => acc + blog.likes.length, 0);
   const totalComments = userBlogs.reduce((acc, blog) => acc + blog.comments.length, 0);
 
   return {
     ...user,
+    blogs: userBlogs,
     stats: {
       posts: postCount,
       likes: totalLikes,
@@ -38,26 +38,42 @@ export async function getUserStats(userId: string) {
   };
 }
 
-// --- 2. UPDATE PROFILE PICTURE ---
-export async function updateProfileImage(userId: string, imageUrl: string) {
+// UPDATE PROFILE PICTURE
+const utapi = new UTApi();
+export async function updateProfileImage(
+  userId: string, 
+  newImageUrl: string | null, 
+  oldImageUrl?: string | null 
+) {
+  
+  if (oldImageUrl) {
+    try {
+      const fileKey = oldImageUrl.split("/f/")[1];
+      if (fileKey) {
+        await utapi.deleteFiles(fileKey);
+      }
+    } catch (error) {
+      console.error("Failed to delete old image:", error);
+    }
+  }
+
   await db.update(users)
-    .set({ profileImg: imageUrl })
+    .set({ profileImg: newImageUrl })
     .where(eq(users.id, userId));
   
   revalidatePath("/home");
 }
 
-// --- 3. CREATE BLOG POST ---
+// CREATE BLOG POST
 export async function createBlog(userId: string, formData: FormData) {
   const title = formData.get("title") as string;
   const content = formData.get("content") as string;
-  const imageUrl = formData.get("imageUrl") as string; // We expect a URL from the upload service
+  const imageUrl = formData.get("imageUrl") as string; 
 
   if (!title || !content) {
     return { success: false, message: "Title and content are required" };
   }
 
-  // Create a simple slug (In production, ensure uniqueness)
   const slug = title.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now();
 
   try {
@@ -67,7 +83,7 @@ export async function createBlog(userId: string, formData: FormData) {
       content,
       slug,
       blogImg: imageUrl || null,
-      isPublished: true, // Auto-publish for now
+      isPublished: true,
       publishedAt: new Date(),
     });
 
