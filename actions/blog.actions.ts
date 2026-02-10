@@ -279,3 +279,23 @@ export async function updateBlog(
     };
   }
 }
+
+// GET ALL PUBLISHED BLOGS
+export async function getAllPublishedBlogs() {
+  try {
+    const allBlogs = await db.query.blogs.findMany({
+      where: eq(blogs.isPublished, true), // Only show published posts
+      orderBy: [desc(blogs.createdAt)],   // Newest first
+      with: {
+        author: true, // We need this to display the author's name/avatar
+        likes: true,
+        comments: true,
+      },
+    });
+
+    return allBlogs;
+  } catch (error) {
+    console.error("Error fetching all blogs:", error);
+    return [];
+  }
+}
