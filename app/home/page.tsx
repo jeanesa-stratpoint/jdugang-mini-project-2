@@ -1,6 +1,6 @@
-import { getUserStats } from "@/actions/home.actions";
 import ProfileHeader from "@/components/ProfileHeader";
 import WriteBlogButton from "@/components/WriteBlogButton";
+import { getUserStats } from "@/actions/home.actions";
 import { redirect } from "next/navigation";
 import { PenSquare } from "lucide-react";
 import { getSession } from "@/lib/session";
@@ -66,7 +66,12 @@ export default async function HomePage() {
                         fade-in slide-in-from-bottom-4 duration-500"
           >
             {userData.blogs.map((blog: BlogProps) => (
-              <BlogCard key={blog.id} blog={blog} authorName={userData.name} />
+              <BlogCard
+                key={blog.id}
+                blog={blog}
+                authorName={userData.name}
+                currentUserId={userData.id}
+              />
             ))}
           </div>
         )}
