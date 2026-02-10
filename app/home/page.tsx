@@ -71,6 +71,7 @@ export default async function HomePage() {
                 blog={blog}
                 authorName={userData.name}
                 currentUserId={userData.id}
+                source="home"
               />
             ))}
           </div>
