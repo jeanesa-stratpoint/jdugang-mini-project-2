@@ -52,6 +52,7 @@ export default async function JournalPage() {
                 blog={blog}
                 authorName={blog.author.name}
                 currentUserId={currentUserId}
+                source="journal"
               />
             ))}
           </div>

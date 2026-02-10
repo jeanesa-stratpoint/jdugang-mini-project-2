@@ -57,10 +57,12 @@ export function BlogCard({
   blog,
   authorName,
   currentUserId,
+  source = "home",
 }: {
   blog: BlogProps;
   authorName: string;
   currentUserId: string;
+  source?: "home" | "journal";
 }) {
   const router = useRouter();
   const publishedDate = formatDate(blog.createdAt);
@@ -233,7 +235,7 @@ export function BlogCard({
           </div>
 
           <Link
-            href={`/journal/${blog.slug}`}
+            href={`/journal/${blog.slug}?from=${source}`}
             className="text-xs font-bold text-[#1F4F46] underline mt-4 hover:text-[#85BFBB] 
                       transition after:content-[''] after:absolute after:inset-0 after:z-10"
           >

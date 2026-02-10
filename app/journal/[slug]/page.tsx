@@ -11,15 +11,17 @@ import { formatDate } from "@/lib/utils/formatdate";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ from?: string }>;
 }
 
-export default async function BlogPage({ params }: PageProps) {
+export default async function BlogPage({ params, searchParams }: PageProps) {
   const session = await getSession();
   if (!session || !session.userId) {
     redirect("/");
   }
 
   const { slug } = await params;
+  const { from } = await searchParams;
   const blog = await getBlogBySlug(slug);
 
   if (!blog) {
@@ -33,6 +35,10 @@ export default async function BlogPage({ params }: PageProps) {
   const isLiked = blog.likes.some(
     (like: { userId: string }) => like.userId === session.userId,
   );
+
+  const cameFromJournal = from === "journal";
+  const backLink = cameFromJournal ? "/journal" : "/home";
+  const backLabel = "Back";
 
   return (
     <div className="min-h-screen bg-[#F5F3EF] pb-20">
@@ -57,12 +63,12 @@ export default async function BlogPage({ params }: PageProps) {
         {/* Back Button */}
         <div className="absolute top-6 left-6 z-10">
           <Link
-            href="/home"
+            href={backLink}
             className="flex items-center gap-2 text-white bg-black/20 
                         hover:bg-black/40 backdrop-blur-sm px-4 py-2 
                         rounded-full transition text-sm font-medium"
           >
-            <ArrowLeft size={16} /> Back to Journal
+            <ArrowLeft size={16} /> {backLabel}
           </Link>
         </div>
       </div>
