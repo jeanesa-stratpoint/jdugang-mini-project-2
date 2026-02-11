@@ -2,11 +2,46 @@
 
 import Image from "next/image";
 import BlogNameCard from "./BlogNameCard";
-import { useState } from "react";
-import { PenTool, X, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import {
+  PenTool,
+  X,
+  Image as ImageIcon,
+  Loader2,
+  Trash2,
+  Bold,
+  Italic,
+  Underline as UnderlineIcon,
+  LucideIcon,
+} from "lucide-react";
 import { createBlog, updateBlog } from "@/actions/blog.actions";
 import { UploadButton } from "@/lib/utils/uploadthing";
 import { useRouter } from "next/navigation";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Underline from "@tiptap/extension-underline";
+
+const ToolbarButton = ({
+  onClick,
+  isActive,
+  icon: Icon,
+}: {
+  onClick: () => void;
+  isActive: boolean;
+  icon: LucideIcon;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`p-2 rounded-md transition ${
+      isActive
+        ? "bg-[#1F4F46] text-white"
+        : "text-[#1F4F46] hover:bg-[#1F4F46]/10"
+    }`}
+  >
+    <Icon size={18} />
+  </button>
+);
 
 interface BlogData {
   id: string;
@@ -35,7 +70,29 @@ export default function WriteBlogModal({
     blogToEdit?.blogImg ?? null,
   );
   const [title, setTitle] = useState(blogToEdit?.title ?? "");
-  const [content, setContent] = useState(blogToEdit?.content ?? "");
+
+  const [contentHtml, setContentHtml] = useState(blogToEdit?.content ?? "");
+
+  const editor = useEditor({
+    extensions: [StarterKit, Underline],
+    content: blogToEdit?.content ?? "",
+    editorProps: {
+      attributes: {
+        class:
+          "w-full min-h-[300px] bg-transparent text-left text-lg text-[#1F4F46] outline-none prose prose-p:my-2 prose-headings:font-serif focus:outline-none",
+      },
+    },
+    onUpdate: ({ editor }) => {
+      setContentHtml(editor.getHTML());
+    },
+    immediatelyRender: false,
+  });
+
+  useEffect(() => {
+    return () => {
+      editor?.destroy();
+    };
+  }, [editor]);
 
   if (!isOpen) return null;
 
@@ -62,9 +119,14 @@ export default function WriteBlogModal({
 
   async function onSubmit(formData: FormData) {
     setIsSubmitting(true);
+    formData.append("content", contentHtml);
 
     if (coverImg) {
       formData.append("imageUrl", coverImg);
+    }
+
+    if (!formData.get("title")) {
+      formData.append("title", title);
     }
 
     if (blogToEdit) {
@@ -84,7 +146,7 @@ export default function WriteBlogModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 mt-5">
       <div
         className="w-full max-w-300 bg-[#F5F3EF] rounded-2xl shadow-2xl p-8 
-                    animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
+                   animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
       >
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
@@ -104,7 +166,7 @@ export default function WriteBlogModal({
         </div>
 
         <form action={onSubmit} className="space-y-6">
-          {/* title */}
+          {/* Title */}
           <div>
             <input
               name="title"
@@ -118,7 +180,7 @@ export default function WriteBlogModal({
             />
           </div>
 
-          {/* img upload */}
+          {/* Img Upload */}
           <div className="space-y-3">
             {coverImg ? (
               <div className="relative w-full h-48 rounded-xl overflow-hidden group">
@@ -140,7 +202,7 @@ export default function WriteBlogModal({
             ) : (
               <div
                 className="flex items-center gap-4 text-sm text-gray-500 
-                              border border-dashed border-[#1F4F46]/20 p-4 rounded-xl hover:bg-white/50 transition"
+                             border border-dashed border-[#1F4F46]/20 p-4 rounded-xl hover:bg-white/50 transition"
               >
                 <div className="relative flex items-center gap-2 cursor-pointer hover:text-[#85BFBB] transition w-full">
                   <ImageIcon size={18} />
@@ -164,19 +226,34 @@ export default function WriteBlogModal({
             )}
           </div>
 
-          {/* content */}
-          <div>
-            <textarea
-              name="content"
-              required
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Tell your story..."
-              className="w-full h-64 bg-transparent text-lg text-[#1F4F46] placeholder:text-[#1F4F46]/30 outline-none resize-none"
-            />
+          {/* EDITOR SECTION */}
+          <div className="border border-gray-200 rounded-xl p-4 bg-white/40 focus-within:border-[#85BFBB] transition">
+            {/* Toolbar */}
+            {editor && (
+              <div className="flex items-center gap-1 mb-3 pb-3 border-b border-gray-100">
+                <ToolbarButton
+                  onClick={() => editor.chain().focus().toggleBold().run()}
+                  isActive={editor.isActive("bold")}
+                  icon={Bold}
+                />
+                <ToolbarButton
+                  onClick={() => editor.chain().focus().toggleItalic().run()}
+                  isActive={editor.isActive("italic")}
+                  icon={Italic}
+                />
+                <ToolbarButton
+                  onClick={() => editor.chain().focus().toggleUnderline().run()}
+                  isActive={editor.isActive("underline")}
+                  icon={UnderlineIcon}
+                />
+              </div>
+            )}
+
+            {/* Editor Area */}
+            <EditorContent editor={editor} />
           </div>
 
-          {/* actions */}
+          {/* Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
             <button
               type="button"
@@ -186,9 +263,9 @@ export default function WriteBlogModal({
               Cancel
             </button>
             <button
-              disabled={isSubmitting}
+              disabled={isSubmitting || !editor?.getText().trim()}
               className="bg-[#85BFBB] text-white px-8 py-2 rounded-full font-bold shadow-md 
-                        hover:bg-[#74aeaa] transition flex items-center gap-2"
+                        hover:bg-[#74aeaa] transition flex items-center gap-2 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <Loader2 className="animate-spin" size={18} />

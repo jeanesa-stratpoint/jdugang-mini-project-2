@@ -35,7 +35,6 @@ export default async function RootLayout({
 }>) {
   const session = await getSession();
 
-  // Initialize as null
   let user = null;
 
   if (session?.userId) {
@@ -43,14 +42,13 @@ export default async function RootLayout({
       where: eq(users.id, String(session.userId)),
       columns: {
         name: true,
+        id: true,
         username: true,
         email: true,
         profileImg: true,
       },
     });
 
-    // FIX: Drizzle returns 'undefined' if not found.
-    // The '?? null' operator converts 'undefined' to 'null' to satisfy TypeScript.
     user = fetchedUser ?? null;
   }
 

@@ -27,23 +27,25 @@ export const blogs = pgTable('blogs', {
 
 export const gratitudeEntries = pgTable('gratitude_entries', {
   id: uuid('id').defaultRandom().primaryKey(),
-  authorId: uuid('author_id').references(() => users.id).notNull(),
-  content: varchar('content', { length: 100 }).notNull(), 
+  authorId: uuid('author_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  content: varchar('content', { length: 280 }).notNull(), 
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 export const comments = pgTable('comments', {
   id: uuid('id').defaultRandom().primaryKey(),
   blogId: uuid('blog_id').references(() => blogs.id, { onDelete: 'cascade' }).notNull(),
-  userId: uuid('user_id').references(() => users.id).notNull(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   content: text('content').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  isEdited: boolean('is_edited').default(false).notNull(),
 });
 
 // user can only like a specific blog ONCE.
 export const likes = pgTable('likes', {
     blogId: uuid('blog_id').references(() => blogs.id, { onDelete: 'cascade' }).notNull(),
-    userId: uuid('user_id').references(() => users.id).notNull(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   }, (t) => ({
     pk: uniqueIndex('user_blog_like_unique').on(t.userId, t.blogId), // Prevents duplicate likes
@@ -62,6 +64,16 @@ export const passwordResetTokens = pgTable('password_reset_tokens', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+export const notifications = pgTable("notifications", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  recipientId: uuid("recipient_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  senderId: uuid("sender_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  type: varchar("type", { length: 50 }).notNull(),
+  blogId: uuid("blog_id").references(() => blogs.id, { onDelete: "cascade" }).notNull(),
+  isRead: boolean("is_read").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // RELATIONS 
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -70,6 +82,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   likes: many(likes),
   gratitudeEntries: many(gratitudeEntries),
   passwordResetTokens: many(passwordResetTokens),
+  notificationsReceived: many(notifications, { relationName: "recipientNotifications" }),
+  notificationsSent: many(notifications, { relationName: "senderNotifications" }),
 }));
 
 export const blogsRelations = relations(blogs, ({ one, many }) => ({
@@ -107,5 +121,29 @@ export const likesRelations = relations(likes, ({ one }) => ({
   user: one(users, {
     fields: [likes.userId],
     references: [users.id],
+  }),
+}));
+
+export const gratitudeEntriesRelations = relations(gratitudeEntries, ({ one }) => ({
+  author: one(users, {
+    fields: [gratitudeEntries.authorId],
+    references: [users.id],
+  }),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  recipient: one(users, {
+    fields: [notifications.recipientId],
+    references: [users.id],
+    relationName: "recipientNotifications",
+  }),
+  sender: one(users, {
+    fields: [notifications.senderId],
+    references: [users.id],
+    relationName: "senderNotifications",
+  }),
+  blog: one(blogs, {
+    fields: [notifications.blogId],
+    references: [blogs.id],
   }),
 }));

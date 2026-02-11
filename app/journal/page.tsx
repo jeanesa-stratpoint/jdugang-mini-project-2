@@ -2,13 +2,26 @@ import { getAllPublishedBlogs } from "@/actions/blog.actions";
 import { BlogCard } from "@/components/BlogCard";
 import { getSession } from "@/lib/session";
 import { BookHeart, Sparkles } from "lucide-react";
+import { SortFilter } from "@/components/SortFilter";
 
 export const dynamic = "force-dynamic";
 
-export default async function JournalPage() {
+interface JournalPageProps {
+  searchParams: Promise<{ sort?: string }>;
+}
+
+export default async function JournalPage({ searchParams }: JournalPageProps) {
   const session = await getSession();
   const currentUserId = session?.userId as string;
-  const blogs = await getAllPublishedBlogs();
+  const { sort } = await searchParams;
+  const currentSort = sort || "newest";
+  const blogs = await getAllPublishedBlogs(currentSort);
+
+  const sortOptions = [
+    { value: "newest", label: "Newest" },
+    { value: "oldest", label: "Oldest" },
+    { value: "popular", label: "Most Popular" },
+  ];
 
   return (
     <div className="min-h-screen bg-[#F5F3EF]">
@@ -35,6 +48,13 @@ export default async function JournalPage() {
 
       {/* FEED */}
       <main className="max-w-350 mx-auto px-4 py-16">
+        <div className="flex flex-wrap justify-center gap-3 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <SortFilter
+            currentSort={currentSort}
+            basePath="/journal"
+            options={sortOptions}
+          />
+        </div>
         {blogs.length === 0 ? (
           <div className="text-center py-20 border border-dashed border-gray-300 rounded-xl">
             <h3 className="text-xl text-[#1F4F46] font-serif">

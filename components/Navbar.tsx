@@ -5,6 +5,7 @@ import LoginModal from "./LoginModal";
 import SignupModal from "./SignupModal";
 import ForgotPasswordModal from "./ForgotPasswordModal";
 import BlogNameCard from "./BlogNameCard";
+import NotificationDropdown from "./NotificationDropdown";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Menu, X, LogOut } from "lucide-react";
@@ -21,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface NavbarProps {
   user: {
+    id: string;
     name: string;
     username: string;
     email: string;
@@ -30,7 +32,7 @@ interface NavbarProps {
 
 export default function Navbar({ user }: NavbarProps) {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false); // Mobile Menu only
+  const [isOpen, setIsOpen] = useState(false);
   const [authMode, setAuthMode] = useState<
     "login" | "signup" | "forgot" | null
   >(null);
@@ -60,16 +62,18 @@ export default function Navbar({ user }: NavbarProps) {
           <BlogNameCard />
         </Link>
 
-        {/* MOBILE HAMBURGER */}
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden p-2 text-[#1F4F46] z-60 hover:bg-black/5 rounded-full transition"
-        >
-          {isOpen ? <X size={28} /> : <Menu size={28} />}
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          {isLoggedIn && user && <NotificationDropdown userId={user.id} />}
 
-        {/* --- DESKTOP VIEW --- */}
-        <div className="hidden md:flex items-center gap-8">
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="p-2 text-[#1F4F46] z-50 hover:bg-black/5 rounded-full transition relative"
+          >
+            {isOpen ? <X size={28} /> : <Menu size={28} />}
+          </button>
+        </div>
+
+        <div className="hidden md:flex items-center gap-6">
           {isLoggedIn && user ? (
             <>
               {/* Links */}
@@ -92,8 +96,10 @@ export default function Navbar({ user }: NavbarProps) {
                 })}
               </div>
 
+              <NotificationDropdown userId={user.id} />
+
               <DropdownMenu>
-                <DropdownMenuTrigger className="focus:outline-none">
+                <DropdownMenuTrigger className="focus:outline-none ml-2">
                   <Avatar>
                     <AvatarImage src={user.profileImg ?? undefined} />
                     <AvatarFallback className="bg-[#85BFBB] text-white font-serif font-bold">
@@ -147,11 +153,10 @@ export default function Navbar({ user }: NavbarProps) {
           )}
         </div>
 
-        {/* --- MOBILE MENU--- */}
         <div
           className={`fixed inset-0 bg-[#E9EEE8] flex flex-col 
                       items-center justify-center transition-transform 
-                      duration-500 ease-in-out z-50 md:hidden ${
+                      duration-500 ease-in-out z-40 md:hidden ${
                         isOpen ? "translate-x-0" : "translate-x-full"
                       }`}
         >
@@ -178,8 +183,8 @@ export default function Navbar({ user }: NavbarProps) {
                 <div className="flex flex-col items-center gap-1 text-center">
                   <div
                     className="w-16 h-16 rounded-full bg-[#85BFBB] 
-                                  flex items-center justify-center text-white 
-                                  text-3xl font-serif font-bold shadow-sm mb-2"
+                              flex items-center justify-center text-white 
+                              text-3xl font-serif font-bold shadow-sm mb-2"
                   >
                     {getInitials(user.name)}
                   </div>

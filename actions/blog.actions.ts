@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { blogs, likes, comments } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { blogs, likes, comments, notifications } from "@/lib/db/schema";
+import { eq, and, desc, asc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { UTApi } from "uploadthing/server";
 
@@ -14,15 +14,36 @@ export async function toggleLike(blogId: string, userId: string) {
     const existingLike = await db.query.likes.findFirst({
       where: and(eq(likes.blogId, blogId), eq(likes.userId, userId)),
     });
+    
+    const blog = await db.query.blogs.findFirst({
+      where: eq(blogs.id, blogId),
+      columns: { authorId: true },
+    });
+
+    if (!blog) return { success: false, message: "Blog not found" };
 
     if (existingLike) {
       // Unlike
       await db.delete(likes).where(
         and(eq(likes.blogId, blogId), eq(likes.userId, userId))
       );
+
+      if (blog.authorId !== userId) {
+        await db.delete(notifications).where(
+          and(
+            eq(notifications.recipientId, blog.authorId),
+            eq(notifications.senderId, userId),
+            eq(notifications.type, "LIKE"),
+            eq(notifications.blogId, blogId)
+          )
+        );
+      }
       
       revalidatePath(`/journal/[slug]`); 
-      return { success: true, isLiked: false };
+      return { 
+        success: true, 
+        isLiked: false 
+      };
     } else {
       // Like
       await db.insert(likes).values({
@@ -30,12 +51,39 @@ export async function toggleLike(blogId: string, userId: string) {
         userId,
       });
 
+      if (blog.authorId !== userId) {
+        // Check if notification already exists to avoid duplicates 
+        const existingNote = await db.query.notifications.findFirst({
+            where: and(
+                eq(notifications.recipientId, blog.authorId),
+                eq(notifications.senderId, userId),
+                eq(notifications.type, "LIKE"),
+                eq(notifications.blogId, blogId)
+            )
+        });
+
+        if (!existingNote) {
+            await db.insert(notifications).values({
+                recipientId: blog.authorId,
+                senderId: userId,
+                type: "LIKE",
+                blogId: blogId,
+            });
+        }
+      }
+
       revalidatePath(`/journal/[slug]`);
-      return { success: true, isLiked: true };
+      return { 
+        success: true, 
+        isLiked: true 
+      };
     }
   } catch (error) {
     console.error(`Error toggling like... ${error}`);
-    return { success: false, message: "Failed to like post." };
+    return { 
+      success: false, 
+      message: "Failed to like post." 
+    };
   }
 }
 
@@ -47,7 +95,26 @@ export async function addComment(blogId: string, userId: string, content: string
         success: false, 
         message: "Comment cannot be empty" 
       };
+    
+    const blog = await db.query.blogs.findFirst({
+      where: eq(blogs.id, blogId),
+    });
 
+    if (!blog) 
+      return { 
+        success: false, 
+        message: "Blog not found" 
+      };
+
+    if (blog.authorId !== userId) {
+      await db.insert(notifications).values({
+        recipientId: blog.authorId,
+        senderId: userId,
+        type: "COMMENT",
+        blogId: blogId,
+      });
+    }
+  
     await db.insert(comments).values({
       blogId,
       userId,
@@ -60,10 +127,47 @@ export async function addComment(blogId: string, userId: string, content: string
       message: "Comment added" 
     };
   } catch (error) {
-    console.error(`Error adding comment... ${error}`);
+    console.error(`Failed adding comment... ${error}`);
     return { 
       success: false, 
       message: "Failed to add comment." 
+    };
+  }
+}
+
+// UPDATE COMMENT
+export async function updateComment(
+  commentId: string,
+  userId: string,
+  newContent: string
+) {
+  try {
+    if (!newContent.trim()) {
+      return { 
+        success: false, 
+        message: "Comment cannot be empty" 
+      };
+    }
+
+    await db
+      .update(comments)
+      .set({
+        content: newContent,
+        isEdited: true,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(comments.id, commentId), eq(comments.userId, userId)));
+
+    revalidatePath(`/journal/[slug]`);
+    return { 
+      success: true, 
+      message: "Comment updated" 
+    };
+  } catch (error) {
+    console.error(`Failed to update comment... ${error}`);
+    return { 
+      success: false, 
+      message: "Failed to update comment." 
     };
   }
 }
@@ -80,7 +184,7 @@ export async function deleteComment(commentId: string, userId: string) {
       success: true, 
       message: "Comment deleted" };
   } catch (error) {
-    console.error(`Error deleting comment... ${error}`);
+    console.error(`Failed to delete comment... ${error}`);
     return { 
       success: false, 
       message: "Failed to delete comment." };
@@ -281,21 +385,30 @@ export async function updateBlog(
 }
 
 // GET ALL PUBLISHED BLOGS
-export async function getAllPublishedBlogs() {
+export async function getAllPublishedBlogs(sortBy: string = "newest") {
   try {
+    let orderByClause = [desc(blogs.createdAt)]; 
+    if (sortBy === "oldest") {
+      orderByClause = [asc(blogs.createdAt)];
+    } 
+
     const allBlogs = await db.query.blogs.findMany({
-      where: eq(blogs.isPublished, true), // Only show published posts
-      orderBy: [desc(blogs.createdAt)],   // Newest first
+      where: eq(blogs.isPublished, true),
+      orderBy: orderByClause,
       with: {
-        author: true, // We need this to display the author's name/avatar
+        author: true,
         likes: true,
         comments: true,
       },
     });
 
+    if (sortBy === "popular") {
+      return allBlogs.sort((a, b) => b.likes.length - a.likes.length);
+    }
+
     return allBlogs;
   } catch (error) {
-    console.error("Error fetching all blogs:", error);
+    console.error( `Failed to fetch all blogs... ${error}`);
     return [];
   }
 }

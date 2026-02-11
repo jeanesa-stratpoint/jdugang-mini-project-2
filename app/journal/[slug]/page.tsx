@@ -5,7 +5,7 @@ import CommentSection from "@/components/CommentSection";
 import SingleBlogControls from "@/components/SingleBlogControls";
 import { getBlogBySlug } from "@/actions/blog.actions";
 import { getSession } from "@/lib/session";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar } from "lucide-react";
 import { formatDate } from "@/lib/utils/formatdate";
 
@@ -16,9 +16,7 @@ interface PageProps {
 
 export default async function BlogPage({ params, searchParams }: PageProps) {
   const session = await getSession();
-  if (!session || !session.userId) {
-    redirect("/");
-  }
+  const currentUserId = session?.userId ? String(session.userId) : "";
 
   const { slug } = await params;
   const { from } = await searchParams;
@@ -30,14 +28,20 @@ export default async function BlogPage({ params, searchParams }: PageProps) {
 
   const publishedDate = formatDate(blog.createdAt);
   const lastUpdated = formatDate(blog.updatedAt);
-  const isOwner = session.userId === blog.authorId;
+  const isOwner = currentUserId === blog.authorId;
 
-  const isLiked = blog.likes.some(
-    (like: { userId: string }) => like.userId === session.userId,
-  );
+  const isLiked = currentUserId
+    ? blog.likes.some(
+        (like: { userId: string }) => like.userId === currentUserId,
+      )
+    : false;
 
   const cameFromJournal = from === "journal";
-  const backLink = cameFromJournal ? "/journal" : "/home";
+  const backLink = !currentUserId
+    ? "/"
+    : cameFromJournal
+      ? "/journal"
+      : "/home";
   const backLabel = "Back";
 
   return (
@@ -80,10 +84,7 @@ export default async function BlogPage({ params, searchParams }: PageProps) {
           <div className="mb-10 text-center border-b border-gray-100 pb-10">
             {isOwner && (
               <div className="absolute top-5 right-10">
-                <SingleBlogControls
-                  blog={blog}
-                  userId={session.userId as string}
-                />
+                <SingleBlogControls blog={blog} userId={currentUserId} />
               </div>
             )}
             <h1 className="text-3xl md:text-5xl font-serif text-[#1F4F46] leading-tight mb-6">
@@ -129,7 +130,7 @@ export default async function BlogPage({ params, searchParams }: PageProps) {
               {/* Like Button */}
               <LikeButton
                 blogId={blog.id}
-                userId={session.userId as string}
+                userId={currentUserId}
                 initialLikesCount={blog.likes.length}
                 initialIsLiked={isLiked}
               />
@@ -138,19 +139,22 @@ export default async function BlogPage({ params, searchParams }: PageProps) {
 
           {/* Blog Body Content */}
           <div
-            className="font-serif text-lg leading-relaxed 
-                        text-[#1F4F46]/90 whitespace-pre-wrap"
-          >
-            {blog.content}
-          </div>
+            className="text-lg leading-relaxed text-[#1F4F46]/90 whitespace-pre-wrap prose prose-p:mb-4 prose-headings:font-serif prose-a:text-blue-600"
+            dangerouslySetInnerHTML={{ __html: blog.content }}
+          />
 
           {/* comment section */}
-          <CommentSection
-            blogId={blog.id}
-            currentUserId={session.userId as string}
-            blogAuthorId={blog.authorId}
-            comments={blog.comments}
-          />
+          <div
+            id="comments"
+            className="mt-16 pt-10 border-t border-gray-100 scroll-mt-24"
+          >
+            <CommentSection
+              blogId={blog.id}
+              currentUserId={currentUserId}
+              blogAuthorId={blog.authorId}
+              comments={blog.comments}
+            />
+          </div>
         </div>
       </main>
     </div>

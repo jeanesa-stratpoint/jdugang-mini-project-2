@@ -1,16 +1,31 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { addComment, deleteComment } from "@/actions/blog.actions";
-import { MessageSquare, Send, Trash2, Loader2 } from "lucide-react";
+import {
+  addComment,
+  deleteComment,
+  updateComment,
+} from "@/actions/blog.actions";
+import {
+  MessageSquare,
+  Send,
+  Trash2,
+  Loader2,
+  Edit2,
+  X,
+  Check,
+} from "lucide-react";
 import { formatDate } from "@/lib/utils/formatdate";
 import Image from "next/image";
 import DeleteModal from "./DeleteModal";
+import AuthGateModal from "./AuthGateModal";
 
 interface Comment {
   id: string;
   content: string;
   createdAt: Date;
+  updatedAt: Date;
+  isEdited: boolean;
   userId: string;
   user: {
     name: string;
@@ -33,11 +48,23 @@ export default function CommentSection({
 }: CommentSectionProps) {
   const [input, setInput] = useState("");
   const [isPending, startTransition] = useTransition();
+
+  const [showGateModal, setShowGateModal] = useState(false);
+
   const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!currentUserId) {
+      setShowGateModal(true);
+      return;
+    }
+
     if (!input.trim()) return;
 
     startTransition(async () => {
@@ -52,16 +79,33 @@ export default function CommentSection({
 
   const confirmDelete = async () => {
     if (!commentToDelete) return;
-
     setIsDeleting(true);
     try {
       await deleteComment(commentToDelete, currentUserId);
     } catch (error) {
-      console.error("Failed to delete comment:", error);
+      console.error(`Failed to delete comment... ${error}`);
     } finally {
       setIsDeleting(false);
       setCommentToDelete(null);
     }
+  };
+
+  const startEditing = (comment: Comment) => {
+    setEditingCommentId(comment.id);
+    setEditContent(comment.content);
+  };
+
+  const cancelEditing = () => {
+    setEditingCommentId(null);
+    setEditContent("");
+  };
+
+  const saveEdit = async (commentId: string) => {
+    if (!editContent.trim()) return;
+
+    await updateComment(commentId, currentUserId, editContent);
+    setEditingCommentId(null);
+    setEditContent("");
   };
 
   return (
@@ -71,7 +115,6 @@ export default function CommentSection({
         Comments ({comments.length})
       </h3>
 
-      {/* Comment Form */}
       <form onSubmit={handleSubmit} className="mb-10 flex gap-4">
         <div className="flex-1 relative">
           <input
@@ -98,7 +141,6 @@ export default function CommentSection({
         </div>
       </form>
 
-      {/* Comments List */}
       <div className="space-y-6">
         {comments.length === 0 ? (
           <div className="text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
@@ -111,6 +153,7 @@ export default function CommentSection({
             const isAuthor = comment.userId === blogAuthorId;
             const isOwner = comment.userId === currentUserId;
             const isDeletingThis = commentToDelete === comment.id && isDeleting;
+            const isEditingThis = editingCommentId === comment.id;
 
             return (
               <div
@@ -119,10 +162,9 @@ export default function CommentSection({
                   isDeletingThis ? "opacity-50 pointer-events-none" : ""
                 }`}
               >
-                {/* Avatar */}
                 <div
-                  className="w-10 h-10 rounded-full bg-[#E9EEE8] shrink-0 overflow-hidden 
-                                border border-white shadow-sm flex items-center justify-center"
+                  className="w-10 h-10 rounded-full bg-[#E9EEE8] shrink-0 overflow-hidden border 
+                              border-white shadow-sm flex items-center justify-center"
                 >
                   {comment.user.profileImg ? (
                     <Image
@@ -142,20 +184,18 @@ export default function CommentSection({
                 {/* Content Bubble */}
                 <div className="flex-1">
                   <div
-                    className={`rounded-2xl rounded-tl-none px-4 py-3 relative group/bubble
-                    ${
+                    className={`rounded-2xl rounded-tl-none px-4 py-3 relative group/bubble ${
                       isAuthor
                         ? "bg-[#1F4F46]/5 border border-[#1F4F46]/10"
                         : "bg-gray-50"
                     }`}
                   >
+                    {/* Header: Name, Badge, Date */}
                     <div className="flex justify-between items-baseline mb-1">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-sm text-[#1F4F46]">
                           {comment.user.name}
                         </span>
-
-                        {/* Author Badge */}
                         {isAuthor && (
                           <span
                             className="bg-[#85BFBB] text-white text-[10px] px-1.5 py-0.5 
@@ -165,25 +205,69 @@ export default function CommentSection({
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] text-gray-400">
-                        {formatDate(comment.createdAt)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {/* Edited Badge */}
+                        {comment.isEdited && (
+                          <span className="text-[10px] text-gray-400 italic">
+                            (edited)
+                          </span>
+                        )}
+                        <span className="text-[10px] text-gray-400">
+                          {formatDate(comment.createdAt)}
+                        </span>
+                      </div>
                     </div>
 
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      {comment.content}
-                    </p>
+                    {isEditingThis ? (
+                      <div className="mt-2">
+                        <textarea
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          className="w-full bg-white border border-[#85BFBB] rounded-lg p-2 text-sm 
+                                    text-[#1F4F46] outline-none resize-none min-h-15"
+                          autoFocus
+                        />
+                        <div className="flex justify-end gap-2 mt-2">
+                          <button
+                            onClick={cancelEditing}
+                            className="p-1 text-gray-400 hover:text-gray-600 transition"
+                          >
+                            <X size={16} />
+                          </button>
+                          <button
+                            onClick={() => saveEdit(comment.id)}
+                            className="p-1 text-[#85BFBB] hover:text-[#1F4F46] transition"
+                          >
+                            <Check size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">
+                        {comment.content}
+                      </p>
+                    )}
 
-                    {/* Delete button- */}
-                    {isOwner && (
-                      <button
-                        onClick={() => handleDeleteClick(comment.id)}
-                        className="absolute -right-8 top-1/2 -translate-y-1/2 p-2 text-gray-300 
-                                  hover:text-red-400 transition opacity-0 group-hover:opacity-100"
-                        title="Delete comment"
+                    {isOwner && !isEditingThis && (
+                      <div
+                        className="absolute right-5 top-1/2 -translate-y-1/2 flex items-center 
+                                      gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
-                        <Trash2 size={16} />
-                      </button>
+                        <button
+                          onClick={() => startEditing(comment)}
+                          className="p-2 text-gray-500 hover:text-[#85BFBB] transition bg-white rounded-full shadow-sm border border-gray-100"
+                          title="Edit comment"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(comment.id)}
+                          className="p-2 text-gray-500 hover:text-red-400 transition bg-white rounded-full shadow-sm border border-gray-100"
+                          title="Delete comment"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -193,7 +277,6 @@ export default function CommentSection({
         )}
       </div>
 
-      {/* Delete Modal */}
       <DeleteModal
         isOpen={!!commentToDelete}
         onClose={() => setCommentToDelete(null)}
@@ -202,6 +285,9 @@ export default function CommentSection({
         title="Delete Comment?"
         description="Are you sure you want to delete this comment? This action cannot be undone."
       />
+      {showGateModal && (
+        <AuthGateModal isOpen={true} onClose={() => setShowGateModal(false)} />
+      )}
     </div>
   );
 }

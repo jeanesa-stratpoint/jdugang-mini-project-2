@@ -107,6 +107,11 @@ export function BlogCard({
     setShowEditModal(true);
   };
 
+  const stripHtml = (html: string) => {
+    // This removes all HTML tags (like <p>, <strong>) so the card looks clean
+    return html.replace(/<[^>]*>?/gm, "");
+  };
+
   return (
     <>
       <div
@@ -225,12 +230,12 @@ export function BlogCard({
                 Published: <span className="font-bold">{publishedDate}</span>
               </p>
               <p className="mt-0.5">
-                Updated: <span className="font-bold">{updatedDate}</span>
+                Last Updated: <span className="font-bold">{updatedDate}</span>
               </p>
             </div>
 
             <p className="text-sm text-[#1F4F46]/80 mt-4 line-clamp-3 leading-relaxed">
-              {blog.content}
+              {stripHtml(blog.content)}
             </p>
           </div>
 
