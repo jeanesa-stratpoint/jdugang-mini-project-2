@@ -62,6 +62,7 @@ export default function Navbar({ user }: NavbarProps) {
           <BlogNameCard />
         </Link>
 
+        {/* MOBILE HEADER */}
         <div className="flex items-center gap-2 md:hidden">
           {isLoggedIn && user && <NotificationDropdown userId={user.id} />}
 
@@ -73,10 +74,10 @@ export default function Navbar({ user }: NavbarProps) {
           </button>
         </div>
 
+        {/* DESKTOP VIEW */}
         <div className="hidden md:flex items-center gap-6">
           {isLoggedIn && user ? (
             <>
-              {/* Links */}
               <div className="flex items-center gap-2">
                 {navLinks.map((link) => {
                   const active = pathname === link.href;
@@ -153,6 +154,7 @@ export default function Navbar({ user }: NavbarProps) {
           )}
         </div>
 
+        {/* --- MOBILE MENU OVERLAY --- */}
         <div
           className={`fixed inset-0 bg-[#E9EEE8] flex flex-col 
                       items-center justify-center transition-transform 
@@ -181,13 +183,17 @@ export default function Navbar({ user }: NavbarProps) {
                 <div className="w-full h-px bg-[#1F4F46]/10 my-2" />
 
                 <div className="flex flex-col items-center gap-1 text-center">
-                  <div
-                    className="w-16 h-16 rounded-full bg-[#85BFBB] 
-                              flex items-center justify-center text-white 
-                              text-3xl font-serif font-bold shadow-sm mb-2"
-                  >
-                    {getInitials(user.name)}
-                  </div>
+                  {/* 👇 FIX: Replaced hardcoded div with Avatar Component */}
+                  <Avatar className="w-16 h-16 mb-2 border-2 border-white shadow-sm">
+                    <AvatarImage
+                      src={user.profileImg ?? undefined}
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="bg-[#85BFBB] text-white text-3xl font-serif font-bold">
+                      {getInitials(user.name)}
+                    </AvatarFallback>
+                  </Avatar>
+
                   <p className="text-[#1F4F46] text-lg font-bold">
                     {user.name}
                   </p>
@@ -228,6 +234,7 @@ export default function Navbar({ user }: NavbarProps) {
           </div>
         </div>
 
+        {/* --- AUTH MODALS --- */}
         {authMode === "login" && (
           <LoginModal
             onClose={closeAuth}

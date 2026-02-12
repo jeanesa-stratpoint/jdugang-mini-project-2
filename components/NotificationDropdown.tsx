@@ -157,7 +157,7 @@ export default function NotificationDropdown({ userId }: { userId: string }) {
                               alt={note.sender.name}
                               width={36}
                               height={36}
-                              className="object-cover"
+                              className="object-cover w-full h-full"
                             />
                           ) : (
                             <div className="w-full h-full bg-[#1F4F46] text-white flex items-center justify-center font-bold text-xs">

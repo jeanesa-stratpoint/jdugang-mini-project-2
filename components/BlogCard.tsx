@@ -5,28 +5,11 @@ import Image from "next/image";
 import DeleteModal from "./DeleteModal";
 import WriteBlogModal from "./WriteBlogModal";
 import { useState } from "react";
-import {
-  Heart,
-  MessageSquare,
-  MoreHorizontal,
-  Share2,
-  Trash2,
-  Edit3,
-  EyeOff,
-  Eye,
-  Loader2,
-  Check,
-} from "lucide-react";
+import { Heart, MessageSquare } from "lucide-react";
 import { formatDate } from "@/lib/utils/formatdate";
-import { deleteBlog, toggleBlogPublish } from "@/actions/blog.actions";
+import { deleteBlog } from "@/actions/blog.actions";
 import { useRouter } from "next/navigation";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import BlogActionsMenu from "@/components/BlogActionsMenu";
 
 interface Like {
   userId: string;
@@ -70,14 +53,9 @@ export function BlogCard({
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const isOwner = currentUserId === blog.authorId;
-
-  const handleDeleteClick = () => {
-    setShowDeleteModal(true);
-  };
 
   const confirmDelete = async () => {
     setIsLoading(true);
@@ -87,28 +65,7 @@ export function BlogCard({
     router.refresh();
   };
 
-  const handleTogglePublish = async () => {
-    setIsLoading(true);
-    await toggleBlogPublish(blog.id, currentUserId, blog.isPublished ?? false);
-    setIsLoading(false);
-    router.refresh();
-  };
-
-  const handleShare = () => {
-    const url = `${window.location.origin}/journal/${blog.slug}`;
-    navigator.clipboard.writeText(url);
-    setIsCopied(true);
-    setTimeout(() => {
-      setIsCopied(false);
-    }, 2000);
-  };
-
-  const handleEdit = () => {
-    setShowEditModal(true);
-  };
-
   const stripHtml = (html: string) => {
-    // This removes all HTML tags (like <p>, <strong>) so the card looks clean
     return html.replace(/<[^>]*>?/gm, "");
   };
 
@@ -156,68 +113,12 @@ export function BlogCard({
                   <Heart size={14} /> {blog.likes.length}
                 </span>
 
-                <div className="relative">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="hover:text-[#1F4F46] transition p-1 outline-none">
-                        {isLoading ? (
-                          <Loader2 className="animate-spin" size={20} />
-                        ) : (
-                          <MoreHorizontal size={20} />
-                        )}
-                      </button>
-                    </DropdownMenuTrigger>
-
-                    <DropdownMenuContent align="end" className="w-40">
-                      {isOwner ? (
-                        <>
-                          <DropdownMenuItem
-                            onClick={handleEdit}
-                            className="cursor-pointer gap-2"
-                          >
-                            <Edit3 size={14} /> Edit
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            onClick={handleTogglePublish}
-                            className="cursor-pointer gap-2"
-                          >
-                            {blog.isPublished ? (
-                              <>
-                                <EyeOff size={14} /> Unpublish
-                              </>
-                            ) : (
-                              <>
-                                <Eye size={14} /> Publish
-                              </>
-                            )}
-                          </DropdownMenuItem>
-
-                          <DropdownMenuSeparator />
-
-                          <DropdownMenuItem
-                            onClick={handleDeleteClick}
-                            className="cursor-pointer gap-2 text-red-600 focus:text-red-600 focus:bg-red-50"
-                          >
-                            <Trash2 size={14} /> Delete
-                          </DropdownMenuItem>
-                        </>
-                      ) : (
-                        <DropdownMenuItem
-                          onClick={handleShare}
-                          className="cursor-pointer gap-2"
-                        >
-                          {isCopied ? (
-                            <Check size={14} className="text-green-500" />
-                          ) : (
-                            <Share2 size={14} />
-                          )}
-                          {isCopied ? "Copied!" : "Share"}
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                <BlogActionsMenu
+                  blog={blog}
+                  currentUserId={currentUserId}
+                  isOwner={isOwner}
+                  redirectOnDelete={false}
+                />
               </div>
             </div>
 

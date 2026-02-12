@@ -4,6 +4,7 @@ import { X, LogIn, UserPlus } from "lucide-react";
 import { useState } from "react";
 import LoginModal from "./LoginModal";
 import SignupModal from "./SignupModal";
+import ForgotPasswordModal from "./ForgotPasswordModal";
 
 interface AuthGateModalProps {
   isOpen: boolean;
@@ -11,7 +12,9 @@ interface AuthGateModalProps {
 }
 
 export default function AuthGateModal({ isOpen, onClose }: AuthGateModalProps) {
-  const [view, setView] = useState<"gate" | "login" | "signup">("gate");
+  const [view, setView] = useState<
+    "gate" | "login" | "signup" | "forgot-password"
+  >("gate");
 
   if (!isOpen) return null;
 
@@ -20,7 +23,7 @@ export default function AuthGateModal({ isOpen, onClose }: AuthGateModalProps) {
       <LoginModal
         onClose={onClose}
         onSwitch={() => setView("signup")}
-        onForgot={() => {}}
+        onForgot={() => setView("forgot-password")}
       />
     );
   }
@@ -30,6 +33,15 @@ export default function AuthGateModal({ isOpen, onClose }: AuthGateModalProps) {
       <SignupModal
         onCloseAction={onClose}
         onSwitchAction={() => setView("login")}
+      />
+    );
+  }
+
+  if (view === "forgot-password") {
+    return (
+      <ForgotPasswordModal
+        onClose={onClose}
+        onBackToLogin={() => setView("login")}
       />
     );
   }

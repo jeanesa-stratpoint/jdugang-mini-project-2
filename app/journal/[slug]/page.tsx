@@ -2,12 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 import LikeButton from "@/components/LikeButton";
 import CommentSection from "@/components/CommentSection";
-import SingleBlogControls from "@/components/SingleBlogControls";
 import { getBlogBySlug } from "@/actions/blog.actions";
 import { getSession } from "@/lib/session";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar } from "lucide-react";
 import { formatDate } from "@/lib/utils/formatdate";
+import BlogActionsMenu from "@/components/BlogActionsMenu";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -84,7 +84,12 @@ export default async function BlogPage({ params, searchParams }: PageProps) {
           <div className="mb-10 text-center border-b border-gray-100 pb-10">
             {isOwner && (
               <div className="absolute top-5 right-10">
-                <SingleBlogControls blog={blog} userId={currentUserId} />
+                <BlogActionsMenu
+                  blog={blog}
+                  currentUserId={currentUserId}
+                  isOwner={true}
+                  redirectOnDelete={true}
+                />
               </div>
             )}
             <h1 className="text-3xl md:text-5xl font-serif text-[#1F4F46] leading-tight mb-6">

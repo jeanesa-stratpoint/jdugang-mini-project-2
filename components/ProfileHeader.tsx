@@ -167,7 +167,7 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
         {/* user details*/}
         <div className="flex-1 text-center md:text-left space-y-4">
           <div>
-            <h2 className="text-3xl font-serif text-[#1F4F46]">{user.name}</h2>
+            <h2 className="text-3xl text-[#1F4F46]">{user.name}</h2>
             <p className="text-gray-500">@{user.username}</p>
           </div>
 

@@ -1,6 +1,8 @@
 "use client";
 
 import { AlertCircle, X, Loader2 } from "lucide-react";
+import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
 interface DeleteModalProps {
   isOpen: boolean;
@@ -19,16 +21,32 @@ export default function DeleteModal({
   description,
   isDeleting = false,
 }: DeleteModalProps) {
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
 
-  return (
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
+  if (typeof document === "undefined" || !isOpen) return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center 
-                    bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-9999 flex items-center justify-center 
+                 bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      onClick={(e) => {
+        e.stopPropagation();
+      }}
     >
       <div
-        className="bg-white rounded-2xl shadow-xl w-full max-w-sm 
-                    p-6 relative animate-in zoom-in-95 duration-200"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-sm 
+                   p-6 relative animate-in zoom-in-95 duration-200 border border-gray-100"
+        onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
@@ -75,6 +93,7 @@ export default function DeleteModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

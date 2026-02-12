@@ -35,12 +35,12 @@ export default function ForgotPasswordModal({
         </button>
 
         <div className="space-y-6">
-          <h2 className="text-4xl md:text-5xl font-serif text-[#1F4F46] leading-tight">
+          <h2 className="text-4xl text-left md:text-5xl font-serif text-[#1F4F46] leading-tight">
             Forgot your password
           </h2>
 
           {!state?.success && (
-            <p className="text-[#1F4F46] text-lg font-serif">
+            <p className="text-[#1F4F46] text-left   text-lg font-serif">
               Please enter your email address.
             </p>
           )}
