@@ -2,16 +2,62 @@ import Image from "next/image";
 import Link from "next/link";
 import LikeButton from "@/components/LikeButton";
 import CommentSection from "@/components/CommentSection";
-import { getBlogBySlug } from "@/actions/blog.actions";
 import { getSession } from "@/lib/session";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar } from "lucide-react";
 import { formatDate } from "@/lib/utils/formatdate";
+import { Metadata } from "next";
+import { type BlogProps } from "@/components/BlogCard";
 import BlogActionsMenu from "@/components/BlogActionsMenu";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ from?: string }>;
+}
+
+async function getBlogFromAPI(slug: string): Promise<BlogProps | null> {
+  const apiUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  try {
+    const res = await fetch(`${apiUrl}/api/blogs/${slug}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (error) {
+    console.error("Failed to fetch blog:", error);
+    return null;
+  }
+}
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const blog = await getBlogFromAPI(slug);
+
+  if (!blog) {
+    return {
+      title: "Story Not Found",
+    };
+  }
+
+  // Strip HTML for description
+  const description = blog.content
+    .replace(/<[^>]*>?/gm, "")
+    .substring(0, 160)
+    .trim();
+
+  return {
+    title: blog.title,
+    description: description,
+    openGraph: {
+      title: blog.title,
+      description: description,
+      images: blog.blogImg ? [{ url: blog.blogImg }] : [],
+      type: "article",
+      authors: [blog.author?.name || "Unknown"],
+    },
+  };
 }
 
 export default async function BlogPage({ params, searchParams }: PageProps) {
@@ -20,7 +66,7 @@ export default async function BlogPage({ params, searchParams }: PageProps) {
 
   const { slug } = await params;
   const { from } = await searchParams;
-  const blog = await getBlogBySlug(slug);
+  const blog = await getBlogFromAPI(slug);
 
   if (!blog) {
     notFound();
@@ -105,7 +151,7 @@ export default async function BlogPage({ params, searchParams }: PageProps) {
                                 text-white flex items-center justify-center 
                                 overflow-hidden border border-gray-100"
                   >
-                    {blog.author.profileImg ? (
+                    {blog.author?.profileImg ? (
                       <Image
                         src={blog.author.profileImg}
                         alt={blog.author.name}
@@ -115,12 +161,12 @@ export default async function BlogPage({ params, searchParams }: PageProps) {
                       />
                     ) : (
                       <span className="font-serif text-sm">
-                        {blog.author.name.charAt(0)}
+                        {blog.author?.name.charAt(0)}
                       </span>
                     )}
                   </div>
                   <span className="font-medium text-[#1F4F46]">
-                    {blog.author.name}
+                    {blog.author?.name}
                   </span>
                 </div>
 

@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { blogs, likes, comments, notifications } from "@/lib/db/schema";
-import { eq, and, desc, asc } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { UTApi } from "uploadthing/server";
 
@@ -291,30 +291,6 @@ export async function createBlog(userId: string, formData: FormData) {
   }
 }
 
-// GET BLOG BY SLUG
-export async function getBlogBySlug(slug: string) {
-  try {
-    const blog = await db.query.blogs.findFirst({
-      where: eq(blogs.slug, slug),
-      with: {
-        author: true,
-        likes: true,
-        comments: {
-          with: {
-            user: true,
-          },
-          orderBy: desc(comments.createdAt),
-        },
-      },
-    });
-
-    return blog || null;
-  } catch (error) {
-    console.error(`Error fetching blog... ${error}`);
-    return null;
-  }
-}
-
 // UPDATE BLOG
 export async function updateBlog(
   blogId: string,
@@ -381,34 +357,5 @@ export async function updateBlog(
       success: false, 
       message: "Failed to update story." 
     };
-  }
-}
-
-// GET ALL PUBLISHED BLOGS
-export async function getAllPublishedBlogs(sortBy: string = "newest") {
-  try {
-    let orderByClause = [desc(blogs.createdAt)]; 
-    if (sortBy === "oldest") {
-      orderByClause = [asc(blogs.createdAt)];
-    } 
-
-    const allBlogs = await db.query.blogs.findMany({
-      where: eq(blogs.isPublished, true),
-      orderBy: orderByClause,
-      with: {
-        author: true,
-        likes: true,
-        comments: true,
-      },
-    });
-
-    if (sortBy === "popular") {
-      return allBlogs.sort((a, b) => b.likes.length - a.likes.length);
-    }
-
-    return allBlogs;
-  } catch (error) {
-    console.error( `Failed to fetch all blogs... ${error}`);
-    return [];
   }
 }

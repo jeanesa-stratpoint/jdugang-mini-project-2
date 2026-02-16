@@ -1,10 +1,30 @@
-import { getAllPublishedBlogs } from "@/actions/blog.actions";
-import { BlogCard } from "@/components/BlogCard";
+import { BlogCard, type BlogProps } from "@/components/BlogCard";
 import { getSession } from "@/lib/session";
 import { BookHeart, Sparkles } from "lucide-react";
 import { SortFilter } from "@/components/SortFilter";
 
 export const dynamic = "force-dynamic";
+
+async function getBlogsFromAPI(sort: string): Promise<BlogProps[]> {
+  const apiUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+  try {
+    const res = await fetch(`${apiUrl}/api/blogs?sort=${sort}`, {
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      console.error("Failed to fetch blogs from API");
+      return [];
+    }
+
+    const data = await res.json();
+    return data as BlogProps[];
+  } catch (error) {
+    console.error(`Error fetching blogs from API:`, error);
+    return [];
+  }
+}
 
 interface JournalPageProps {
   searchParams: Promise<{ sort?: string }>;
@@ -15,7 +35,7 @@ export default async function JournalPage({ searchParams }: JournalPageProps) {
   const currentUserId = session?.userId as string;
   const { sort } = await searchParams;
   const currentSort = sort || "newest";
-  const blogs = await getAllPublishedBlogs(currentSort);
+  const blogs = await getBlogsFromAPI(currentSort);
 
   const sortOptions = [
     { value: "newest", label: "Newest" },
@@ -70,7 +90,7 @@ export default async function JournalPage({ searchParams }: JournalPageProps) {
               <BlogCard
                 key={blog.id}
                 blog={blog}
-                authorName={blog.author.name}
+                authorName={blog.author?.name || "Unknown Author"}
                 currentUserId={currentUserId}
                 source="journal"
               />

@@ -15,11 +15,17 @@ interface Like {
   userId: string;
   blogId: string;
 }
-interface Comment {
+export interface Comment {
   id: string;
   content: string;
   userId: string;
-  createdAt: Date;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  isEdited: boolean;
+  user: {
+    name: string;
+    profileImg: string | null;
+  };
 }
 
 export interface BlogProps {
@@ -34,6 +40,11 @@ export interface BlogProps {
   comments: Comment[];
   authorId: string;
   isPublished: boolean | null;
+
+  author?: {
+    name: string;
+    profileImg: string | null;
+  };
 }
 
 export function BlogCard({

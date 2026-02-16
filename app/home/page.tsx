@@ -1,10 +1,41 @@
 import ProfileHeader from "@/components/ProfileHeader";
 import WriteBlogButton from "@/components/WriteBlogButton";
-import { getUserStats } from "@/actions/home.actions";
 import { redirect } from "next/navigation";
 import { PenSquare } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { BlogCard, BlogProps } from "@/components/BlogCard";
+
+interface UserData {
+  id: string;
+  name: string;
+  username: string;
+  email: string;
+  profileImg: string | null;
+  stats: { posts: number; likes: number; comments: number };
+  blogs: BlogProps[];
+}
+
+async function getUserStatsFromAPI(): Promise<UserData | null> {
+  const apiUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get("session")?.value;
+
+  try {
+    const res = await fetch(`${apiUrl}/api/user/stats`, {
+      cache: "no-store",
+      headers: {
+        Cookie: `session=${sessionCookie}`,
+      },
+    });
+
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (error) {
+    console.error("Failed to fetch user stats", error);
+    return null;
+  }
+}
 
 export default async function HomePage() {
   const session = await getSession();
@@ -12,8 +43,7 @@ export default async function HomePage() {
     redirect("/");
   }
 
-  const userId = session.userId as string;
-  const userData = await getUserStats(userId);
+  const userData = await getUserStatsFromAPI();
 
   if (!userData) {
     redirect("/");

@@ -7,17 +7,19 @@ import { formatDate } from "@/lib/utils/formatdate";
 import DeleteModal from "@/components/DeleteModal";
 import { deleteGratitudeEntry } from "@/actions/gratitude.actions";
 
-interface GratitudeCardProps {
-  entry: {
-    id: string;
-    content: string;
-    createdAt: Date;
-    authorId: string;
-    author: {
-      name: string;
-      profileImg: string | null;
-    };
+export interface GratitudeEntry {
+  id: string;
+  content: string;
+  createdAt: Date | string;
+  authorId: string;
+  author: {
+    name: string;
+    profileImg: string | null;
   };
+}
+
+interface GratitudeCardProps {
+  entry: GratitudeEntry;
   currentUserId: string;
 }
 

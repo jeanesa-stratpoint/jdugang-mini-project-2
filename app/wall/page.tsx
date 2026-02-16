@@ -1,7 +1,6 @@
-import { getGratitudeEntries } from "@/actions/gratitude.actions";
 import GratitudeInput from "@/components/GratitudeInput";
 import { SortFilter } from "@/components/SortFilter";
-import GratitudeCard from "@/components/GratitudeCard";
+import GratitudeCard, { type GratitudeEntry } from "@/components/GratitudeCard";
 import { getSession } from "@/lib/session";
 import { Sparkles, StickyNote } from "lucide-react";
 import { redirect } from "next/navigation";
@@ -10,6 +9,29 @@ export const dynamic = "force-dynamic";
 
 interface PageProps {
   searchParams: Promise<{ sort?: string }>;
+}
+
+async function getGratitudeFromAPI(sort: string): Promise<GratitudeEntry[]> {
+  const apiUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get("session")?.value;
+
+  try {
+    const res = await fetch(`${apiUrl}/api/gratitude?sort=${sort}`, {
+      cache: "no-store",
+      headers: {
+        Cookie: `session=${sessionCookie}`,
+      },
+    });
+
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (error) {
+    console.error("Failed to fetch gratitude entries:", error);
+    return [];
+  }
 }
 
 export default async function GratitudeWallPage({ searchParams }: PageProps) {
@@ -22,7 +44,7 @@ export default async function GratitudeWallPage({ searchParams }: PageProps) {
 
   const { sort } = await searchParams;
   const currentSort = sort || "newest";
-  const entries = await getGratitudeEntries(currentSort, session.userId);
+  const entries = await getGratitudeFromAPI(currentSort);
 
   const sortOptions = [
     { value: "newest", label: "Newest" },

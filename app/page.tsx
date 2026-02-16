@@ -1,12 +1,26 @@
-import { getAllPublishedBlogs } from "@/actions/blog.actions";
 import { getGratitudeEntries } from "@/actions/gratitude.actions";
-import { BlogCard } from "@/components/BlogCard";
+import { BlogCard, type BlogProps } from "@/components/BlogCard";
 import GratitudeCard from "@/components/GratitudeCard";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import LandingPageActions from "@/components/LandingPageActions";
 
 export const dynamic = "force-dynamic";
+
+async function getBlogsFromAPI(): Promise<BlogProps[]> {
+  const apiUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  try {
+    // Fetch newest by default
+    const res = await fetch(`${apiUrl}/api/blogs?sort=newest`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (error) {
+    console.error("Failed to fetch blogs:", error);
+    return [];
+  }
+}
 
 export default async function LandingPage() {
   const session = await getSession();
@@ -15,7 +29,7 @@ export default async function LandingPage() {
     redirect("/home");
   }
 
-  const allBlogs = await getAllPublishedBlogs("newest");
+  const allBlogs = await getBlogsFromAPI();
   const blogs = allBlogs.slice(0, 7);
 
   const allGratitude = await getGratitudeEntries("newest");
@@ -59,7 +73,7 @@ export default async function LandingPage() {
                 <BlogCard
                   key={blog.id}
                   blog={blog}
-                  authorName={blog.author.name}
+                  authorName={blog.author?.name || "Unknown Author"}
                   currentUserId=""
                   source="home"
                 />
