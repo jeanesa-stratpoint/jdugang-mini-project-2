@@ -8,6 +8,7 @@ import { ArrowLeft, Calendar } from "lucide-react";
 import { formatDate } from "@/lib/utils/formatdate";
 import { Metadata } from "next";
 import { type BlogProps } from "@/components/BlogCard";
+import { stripHtml } from "@/lib/utils/stripHtml";
 import BlogActionsMenu from "@/components/BlogActionsMenu";
 
 interface PageProps {
@@ -41,11 +42,7 @@ export async function generateMetadata({
     };
   }
 
-  // Strip HTML for description
-  const description = blog.content
-    .replace(/<[^>]*>?/gm, "")
-    .substring(0, 160)
-    .trim();
+  const description = stripHtml(blog.content).substring(0, 160);
 
   return {
     title: blog.title,

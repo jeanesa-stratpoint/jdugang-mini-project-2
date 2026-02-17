@@ -10,6 +10,7 @@ import { formatDate } from "@/lib/utils/formatdate";
 import { deleteBlog } from "@/actions/blog.actions";
 import { useRouter } from "next/navigation";
 import BlogActionsMenu from "@/components/BlogActionsMenu";
+import { stripHtml } from "@/lib/utils/stripHTML";
 
 interface Like {
   userId: string;
@@ -58,6 +59,7 @@ export function BlogCard({
   currentUserId: string;
   source?: "home" | "journal";
 }) {
+  const previewText = stripHtml(blog.content).substring(0, 150) + "...";
   const router = useRouter();
   const publishedDate = formatDate(blog.createdAt);
   const updatedDate = formatDate(blog.updatedAt);
@@ -74,10 +76,6 @@ export function BlogCard({
     setIsLoading(false);
     setShowDeleteModal(false);
     router.refresh();
-  };
-
-  const stripHtml = (html: string) => {
-    return html.replace(/<[^>]*>?/gm, "");
   };
 
   return (
@@ -147,7 +145,7 @@ export function BlogCard({
             </div>
 
             <p className="text-sm text-[#1F4F46]/80 mt-4 line-clamp-3 leading-relaxed">
-              {stripHtml(blog.content)}
+              {previewText}
             </p>
           </div>
 
