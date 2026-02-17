@@ -10,7 +10,7 @@ import { formatDate } from "@/lib/utils/formatdate";
 import { deleteBlog } from "@/actions/blog.actions";
 import { useRouter } from "next/navigation";
 import BlogActionsMenu from "@/components/BlogActionsMenu";
-import { stripHtml } from "@/lib/utils/stripHTML";
+import { stripHtml } from "@/lib/utils/stripHtml";
 
 interface Like {
   userId: string;
