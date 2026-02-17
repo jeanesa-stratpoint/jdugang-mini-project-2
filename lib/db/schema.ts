@@ -10,11 +10,12 @@ export const users = pgTable('users', {
   profileImg: text('profile_img'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  lastPasswordReset: timestamp('last_password_reset'),
 });
 
 export const blogs = pgTable('blogs', {
   id: uuid('id').defaultRandom().primaryKey(),
-  authorId: uuid('author_id').references(() => users.id).notNull(), 
+  authorId: uuid('author_id').references(() => users.id, { onDelete: 'cascade' }).notNull(), 
   title: varchar('title', { length: 255 }).notNull(),
   slug: varchar('slug', { length: 255 }).notNull().unique(), 
   content: text('content').notNull(),
