@@ -151,6 +151,8 @@ export async function requestPasswordReset(
     };
   }
 
+  await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, user.id));
+
   const token = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
   await db.insert(passwordResetTokens).values({
@@ -217,13 +219,17 @@ export async function resetPassword(
   const hashedPassword = await bcrypt.hash(password, 10);
   
   await db.update(users)
-    .set({ passwordHash: hashedPassword })
+    .set({ 
+      passwordHash: hashedPassword,
+      lastPasswordReset: new Date(),
+    })
     .where(eq(users.id, storedToken.userId));
 
 
   await db.delete(passwordResetTokens)
     .where(eq(passwordResetTokens.token, token));
 
+  await deleteSession();
   return { 
     success: true, 
     message: "Password updated successfully!" 

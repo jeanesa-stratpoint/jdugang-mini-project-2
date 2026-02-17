@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useEffect } from "react";
 
 interface NavbarProps {
   user: {
@@ -37,6 +38,36 @@ export default function Navbar({ user }: NavbarProps) {
     "login" | "signup" | "forgot" | null
   >(null);
   const isLoggedIn = !!user;
+
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch("/api/auth/status");
+
+        if (isLoggedIn && res.status === 401) {
+          window.location.href = "/";
+        }
+
+        if (!isLoggedIn && res.status === 200) {
+          window.location.reload();
+        }
+      } catch (error) {
+        console.error("Session check failed", error);
+      }
+    };
+
+    checkSession();
+
+    const onFocus = () => checkSession();
+    window.addEventListener("focus", onFocus);
+
+    const intervalId = setInterval(checkSession, 1000 * 60 * 10);
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      clearInterval(intervalId);
+    };
+  }, [isLoggedIn]);
 
   if (pathname === "/reset-password") {
     return null;
